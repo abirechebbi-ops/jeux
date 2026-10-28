@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>أبطال التحدّي | مسابقة تعليمية تفاعلية</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <!-- Tone.js for Native Interactive Audio (SFX) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <!-- Google Fonts for modern Arabic typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            tajawal: ['Tajawal', 'sans-serif'],
+          },
+          colors: {
+            brandBlue: {
+              DEFAULT: '#2563eb',
+              light: '#60a5fa',
+              dark: '#1d4ed8',
+            },
+            brandOrange: {
+              DEFAULT: '#ea580c',
+              light: '#fb923c',
+              dark: '#c2410c',
+            }
+          },
+          animation: {
+            'bounce-short': 'bounce 0.6s ease-in-out 2',
+            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Tajawal', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    /* Confetti Canvas Layer */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 100;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printable-area, #printable-area * {
+        visibility: visible;
+      }
+      #printable-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-100 via-sky-50 to-amber-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-purple-200">
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Top Navigation Header -->
+  <header class="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-700 text-white shadow-xl sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-2xl shadow-inner border border-white/30">
+          🏆
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black tracking-tight leading-tight">أبطال التحدّي</h1>
+          <p class="text-xs text-blue-100 font-medium">مسابقة مدرسية تفاعلية مشوقة بين فريقين</p>
+        </div>
+      </div>
+      
+      <!-- Audio & Control Buttons -->
+      <div class="flex items-center gap-2">
+        <button id="soundToggleBtn" onclick="toggleSound()" class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-sm flex items-center gap-1.5 border border-white/20">
+          <span id="soundIcon">🔊</span>
+          <span class="hidden sm:inline text-xs font-bold" id="soundLabel">الصوت مفعّل</span>
+        </button>
+        <button onclick="openModal('rulesModal')" class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-sm flex items-center gap-1.5 border border-white/20">
+          <span>📜</span>
+          <span class="hidden sm:inline text-xs font-bold">القوانين</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl w-full mx-auto p-4 sm:p-6 flex-1 flex flex-col justify-center">
+
+    <!-- ========================================== -->
+    <!-- 1. SETUP SECTION (إعداد المسابقة) -->
+    <!-- ========================================== -->
+    <section id="setupSection" class="bg-white/90 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-indigo-100 transition-all duration-300">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 text-white text-3xl mb-3 shadow-lg shadow-blue-500/30">
+          🚀
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-800">استعدّوا لخوض التحدّي الكبير!</h2>
+        <p class="text-slate-500 mt-1 text-sm sm:text-base">قم بتهيئة أسماء الفرق وضبط الإعدادات قبل بدء المسابقة</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
+        <!-- Team 1 Setup -->
+        <div class="p-4 rounded-2xl bg-blue-50/80 border-2 border-blue-200">
+          <label class="block font-bold text-blue-900 mb-1 flex items-center gap-2">
+            <span class="w-4 h-4 rounded-full bg-blue-600 inline-block"></span> الفريق الأول (الأزرق)
+          </label>
+          <input id="team1Input" type="text" value="فرسان المعرفة" maxlength="24"
+            class="w-full p-3 rounded-xl border border-blue-300 focus:outline-none focus:ring-4 focus:ring-blue-300 bg-white font-bold text-slate-800">
+        </div>
+
+        <!-- Team 2 Setup -->
+        <div class="p-4 rounded-2xl bg-orange-50/80 border-2 border-orange-200">
+          <label class="block font-bold text-orange-900 mb-1 flex items-center gap-2">
+            <span class="w-4 h-4 rounded-full bg-orange-500 inline-block"></span> الفريق الثاني (البرتقالي)
+          </label>
+          <input id="team2Input" type="text" value="عباقرة المستقبل" maxlength="24"
+            class="w-full p-3 rounded-xl border border-orange-300 focus:outline-none focus:ring-4 focus:ring-orange-300 bg-white font-bold text-slate-800">
+        </div>
+
+        <!-- Teacher / Host -->
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">👩‍🏫 اسم المعلمة / المشرف(ة)</label>
+          <input id="teacherInput" type="text" value="أ. فاطمة"
+            class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+        </div>
+
+        <!-- Lesson / Topic -->
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">📚 موضوع التحدّي / المادة</label>
+          <input id="lessonInput" type="text" value="تحدّي العلوم والمعارف العامة"
+            class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+        </div>
+
+        <!-- Timer Setting -->
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">⏱️ وقت الإجابة لكل سؤال</label>
+          <select id="durationSelect" class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-bold">
+            <option value="15">15 ثانية (تحدّي سريع)</option>
+            <option value="20" selected>20 ثانية (مناسب وموصى به)</option>
+            <option value="30">30 ثانية (وقت هادئ للتفكير)</option>
+            <option value="45">45 ثانية (أسئلة حسابية)</option>
+            <option value="0">بدون مؤقت زمني ♾️</option>
+          </select>
+        </div>
+
+        <!-- Question Pack Selection -->
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">🎯 بنك الأسئلة المعتمد</label>
+          <div class="flex gap-2">
+            <select id="packSelect" onchange="changePack(this.value)" class="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-bold">
+              <option value="general">الثقافة والعلوم العامة (15 سؤال)</option>
+              <option value="islamic">التربية الإسلامية والسيرة (15 سؤال)</option>
+              <option value="math">الرياضيات والذكاء الرقمي (15 سؤال)</option>
+            </select>
+            <button onclick="openModal('editorModal')" title="تعديل أو إدخال أسئلتك الخاصة" class="px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 flex items-center justify-center text-lg active:scale-95 transition">
+              ✏️
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick summary card -->
+      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-100 mb-6 text-sm flex items-start gap-3">
+        <span class="text-2xl mt-0.5">💡</span>
+        <div class="text-slate-700 leading-relaxed">
+          <strong class="text-indigo-900 block font-bold mb-1">نظام المسابقة التفاعلية:</strong>
+          خمس جولات تصاعدية بنقاط مضاعفة. دور الإجابة يتبادل تلقائياً بين الفريقين. إذا أخطأ الفريق أو انتهى وقته، يمكن للمنافس <strong>سرقة السؤال</strong> بنصف النقاط!
+        </div>
+      </div>
+
+      <!-- Start Button CTA -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+        <button onclick="startGame()" class="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-indigo-500/30 hover:scale-105 active:scale-95 transition">
+          🚀 ابدأ المباراة الآن
+        </button>
+        <button onclick="openModal('editorModal')" class="w-full sm:w-auto px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold text-base border border-slate-300 transition">
+          🛠️ تخصيص الأسئلة
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 2. GAME PLAY ARENA (ساحة التحدي) -->
+    <!-- ========================================== -->
+    <section id="gameSection" class="hidden flex-col gap-5">
+      
+      <!-- Live Scoreboard -->
+      <div class="grid grid-cols-2 gap-3 sm:gap-6">
+        <!-- Team 1 Card -->
+        <div id="teamCard0" class="relative overflow-hidden rounded-3xl p-4 sm:p-5 text-white shadow-xl transition-all duration-300 bg-gradient-to-br from-blue-600 to-blue-800 border-4 border-transparent">
+          <div class="flex justify-between items-start">
+            <div class="min-w-0">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/20 mb-1">الفريق الأزرق</span>
+              <h3 id="displayTeam1" class="font-black text-base sm:text-xl truncate">فرسان المعرفة</h3>
+            </div>
+            <span class="text-2xl sm:text-3xl">🛡️</span>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <div class="text-3xl sm:text-5xl font-black tracking-tight" id="scoreDisplay0">0</div>
+            <div class="text-xs sm:text-sm text-blue-100 font-semibold" id="starsDisplay0">⭐ 0 نجوم</div>
+          </div>
+          <div id="turnBadge0" class="hidden mt-2 pt-2 border-t border-white/20 text-xs font-bold flex items-center justify-center gap-1 bg-white/20 rounded-lg py-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> دوره الآن في الإجابة
+          </div>
+        </div>
+
+        <!-- Team 2 Card -->
+        <div id="teamCard1" class="relative overflow-hidden rounded-3xl p-4 sm:p-5 text-white shadow-xl transition-all duration-300 bg-gradient-to-br from-orange-500 to-amber-600 border-4 border-transparent">
+          <div class="flex justify-between items-start">
+            <div class="min-w-0">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/20 mb-1">الفريق البرتقالي</span>
+              <h3 id="displayTeam2" class="font-black text-base sm:text-xl truncate">عباقرة المستقبل</h3>
+            </div>
+            <span class="text-2xl sm:text-3xl">⚡</span>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <div class="text-3xl sm:text-5xl font-black tracking-tight" id="scoreDisplay1">0</div>
+            <div class="text-xs sm:text-sm text-orange-100 font-semibold" id="starsDisplay1">⭐ 0 نجوم</div>
+          </div>
+          <div id="turnBadge1" class="hidden mt-2 pt-2 border-t border-white/20 text-xs font-bold flex items-center justify-center gap-1 bg-white/20 rounded-lg py-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> دوره الآن في الإجابة
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Question Container -->
+      <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-xl border border-indigo-100 flex flex-col justify-between">
+        
+        <!-- Header Info Bar -->
+        <div>
+          <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <span id="roundIndicator" class="px-3 py-1 rounded-full text-xs font-extrabold bg-purple-100 text-purple-700">الجولة 1</span>
+              <span id="questionCountIndicator" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">السؤال 1 من 15</span>
+              <span id="pointsBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">10 نقاط</span>
+            </div>
+
+            <!-- Countdown Timer Display -->
+            <div class="flex items-center gap-2">
+              <div id="timerContainer" class="flex items-center gap-1 px-4 py-1.5 rounded-full bg-purple-50 border-2 border-purple-200 transition">
+                <span class="text-sm">⏱️</span>
+                <span id="timerDisplay" class="font-black text-lg text-purple-700 font-mono tracking-wider">20</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-5">
+            <div id="gameProgressBar" class="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 w-0 transition-all duration-300"></div>
+          </div>
+
+          <!-- Active Team Callout Banner -->
+          <div id="activeBanner" class="py-2.5 px-4 rounded-2xl mb-4 text-center font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition duration-200 bg-blue-100 text-blue-900 border border-blue-200">
+            <span id="bannerIcon">🎯</span>
+            <span id="bannerText">دور الفريق الأول: فرسان المعرفة</span>
+          </div>
+
+          <!-- Question Text Area -->
+          <div class="min-h-[90px] flex items-center justify-center p-3 text-center">
+            <h2 id="questionText" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-800 leading-relaxed">
+              السؤال يتم تحميله...
+            </h2>
+          </div>
+        </div>
+
+        <!-- Answers Options Grid -->
+        <div id="optionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 my-5">
+          <!-- Dynamically populated buttons -->
+        </div>
+
+        <!-- Feedback Box -->
+        <div id="feedbackBox" class="hidden rounded-2xl p-4 my-3 text-sm sm:text-base font-bold flex items-start gap-3 transition">
+          <span id="feedbackIcon" class="text-2xl">🎉</span>
+          <div class="flex-1">
+            <div id="feedbackTitle" class="text-base sm:text-lg font-black"></div>
+            <div id="feedbackExplanation" class="text-sm font-medium mt-1 opacity-90"></div>
+          </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+          
+          <!-- State 1: Answer Controls -->
+          <div id="answerControls" class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <button id="confirmAnswerBtn" onclick="confirmSelectedAnswer()" disabled
+              class="flex-1 sm:flex-initial px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:hover:bg-indigo-600 text-white font-black text-sm sm:text-base shadow-md transition active:scale-95">
+              ✅ تأكيد الإجابة
+            </button>
+            <button id="hintBtn" onclick="useHint()" class="px-4 py-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-sm transition active:scale-95">
+              💡 تلميح
+            </button>
+            <button id="pauseBtn" onclick="togglePauseGame()" class="px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition">
+              ⏸️ مؤقت
+            </button>
+            <button onclick="skipCurrentQuestion()" class="px-3 py-3 rounded-xl hover:bg-red-50 text-red-600 font-bold text-xs sm:text-sm transition">
+              تخطي ↷
+            </button>
+          </div>
+
+          <!-- State 2: Steal Opportunity Controls -->
+          <div id="stealControls" class="hidden w-full flex-wrap items-center gap-3">
+            <div class="flex-1 text-slate-700 text-xs sm:text-sm font-bold">
+              هل يرغب الفريق المنافس في سرقة السؤال؟
+            </div>
+            <button onclick="executeStealOpportunity()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-sm shadow-md transition active:scale-95">
+              ⚡ نعم، اغتنام فرصة السرقة (+نصف النقاط)
+            </button>
+            <button onclick="skipStealAndContinue()" class="px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm transition">
+              تجاوز السرقة
+            </button>
+          </div>
+
+          <!-- State 3: Next Question Controls -->
+          <div id="nextControls" class="hidden w-full flex items-center justify-end">
+            <button onclick="advanceToNextQuestion()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+              <span>الانتقال للسؤال التالي</span>
+              <span>←</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Quick Session Log & Teacher Assistance -->
+      <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-3 border border-slate-200 text-xs text-slate-500 flex items-center justify-between">
+        <div>
+          <span>المعلمة: <strong class="text-slate-800" id="displayTeacherName">-</strong></span> | 
+          <span>الدرس: <strong class="text-slate-800" id="displayLessonName">-</strong></span>
+        </div>
+        <button onclick="confirmRestartGame()" class="text-red-500 hover:underline font-bold">إنهاء المسابقة والبدء من جديد</button>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 3. RESULTS PODIUM (شاشة النتائج والتتويج) -->
+    <!-- ========================================== -->
+    <section id="resultsSection" class="hidden">
+      <div id="printable-area" class="bg-white rounded-3xl p-6 sm:p-10 shadow-2xl border border-indigo-100 text-center max-w-3xl mx-auto">
+        
+        <!-- Trophy Icon Animated -->
+        <div class="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-white flex items-center justify-center text-5xl shadow-xl shadow-amber-300/50 mb-4 animate-bounce-short">
+          🏆
+        </div>
+
+        <span class="px-4 py-1.5 rounded-full text-xs sm:text-sm font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 inline-block mb-2">
+          شهادة إنجاز التحدّي المعرفي
+        </span>
+
+        <h2 id="finalTitle" class="text-2xl sm:text-4xl font-black text-slate-800 mb-2">أبطال التحدّي الاستثنائيون!</h2>
+        <p id="finalSubtitle" class="text-slate-500 text-sm sm:text-base max-w-lg mx-auto mb-8"></p>
+
+        <!-- Final Scores Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <!-- Final Team 1 Card -->
+          <div id="finalCard1" class="p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 text-slate-800 relative">
+            <div id="winnerCrown1" class="hidden absolute -top-4 right-4 bg-amber-400 text-slate-900 text-xs font-black px-3 py-1 rounded-full shadow-md">👑 الفريق الفائز!</div>
+            <h3 class="font-extrabold text-xl text-blue-900 mb-1" id="resTeam1Name">فرسان المعرفة</h3>
+            <div class="text-5xl font-black text-blue-700 my-3" id="resTeam1Score">0</div>
+            <div class="text-sm font-semibold text-blue-900/80 flex items-center justify-center gap-3">
+              <span id="resTeam1Correct">✅ 0 صحيحة</span>
+              <span>•</span>
+              <span id="resTeam1Stars">⭐ 0 نجوم</span>
+            </div>
+          </div>
+
+          <!-- Final Team 2 Card -->
+          <div id="finalCard2" class="p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 text-slate-800 relative">
+            <div id="winnerCrown2" class="hidden absolute -top-4 right-4 bg-amber-400 text-slate-900 text-xs font-black px-3 py-1 rounded-full shadow-md">👑 الفريق الفائز!</div>
+            <h3 class="font-extrabold text-xl text-orange-900 mb-1" id="resTeam2Name">عباقرة المستقبل</h3>
+            <div class="text-5xl font-black text-orange-700 my-3" id="resTeam2Score">0</div>
+            <div class="text-sm font-semibold text-orange-900/80 flex items-center justify-center gap-3">
+              <span id="resTeam2Correct">✅ 0 صحيحة</span>
+              <span>•</span>
+              <span id="resTeam2Stars">⭐ 0 نجوم</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teacher Appreciation Stamp -->
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-slate-600 text-sm max-w-md mx-auto mb-8 flex justify-around items-center">
+          <div>
+            <div class="text-xs text-slate-400">المشرفة على المسابقة</div>
+            <strong class="text-slate-800 font-bold" id="resTeacher">-</strong>
+          </div>
+          <div class="h-8 w-px bg-slate-300"></div>
+          <div>
+            <div class="text-xs text-slate-400">المادة / الدرس</div>
+            <strong class="text-slate-800 font-bold" id="resLesson">-</strong>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-wrap justify-center gap-3 no-print">
+          <button onclick="restartGame()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl shadow-lg transition active:scale-95">
+            🔄 مباراة جديدة
+          </button>
+          <button onclick="window.print()" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl border border-slate-300 transition active:scale-95">
+            🖨️ طباعة النتائج والشهادة
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto py-4 text-center text-xs text-slate-400 no-print">
+    لعبة أبطال التحدّي التعليمية — تجربة تعليمية تفاعلية تعزز العمل الجماعي والتفكير السريع
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: RULES & INSTRUCTIONS -->
+  <!-- ========================================== -->
+  <div id="rulesModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+          <span>📜</span> لائحة قوانين المسابقة
+        </h3>
+        <button onclick="closeModal('rulesModal')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold">✕</button>
+      </div>
+      <div class="py-4 space-y-3 text-sm text-slate-600 leading-relaxed">
+        <div class="flex gap-2">
+          <span class="font-bold text-indigo-600">1.</span>
+          <span><strong>تناوب الأدوار:</strong> يبدأ السؤال للفريق المحدد، ويدور النقاش بهدوء داخل الفريق لاختيار الإجابة.</span>
+        </div>
+        <div class="flex gap-2">
+          <span class="font-bold text-indigo-600">2.</span>
+          <span><strong>النقاط التصاعدية:</strong> تتدرج المسابقة عبر 5 جولات من 10 نقاط حتى 30 نقطة للأسئلة الذهبية!</span>
+        </div>
+        <div class="flex gap-2">
+          <span class="font-bold text-indigo-600">3.</span>
+          <span><strong>خاصية السرقة (Steal):</strong> في حال ارتكب الفريق خطأ أو انتهى الوقت، تتاح للفريق المنافس فرصة سرقة السؤال وكسب نصف النقاط!</span>
+        </div>
+        <div class="flex gap-2">
+          <span class="font-bold text-indigo-600">4.</span>
+          <span><strong>المساعدة والتلميح:</strong> يمكن طلب تلميح للسؤال للمساعدة دون خصم نقاط.</span>
+        </div>
+      </div>
+      <div class="pt-3 border-t border-slate-100 text-left">
+        <button onclick="closeModal('rulesModal')" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm">
+          فهمت القواعد!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 2: CUSTOM QUESTIONS EDITOR -->
+  <!-- ========================================== -->
+  <div id="editorModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+          <span>🛠️</span> محرر بنك الأسئلة المخصص
+        </h3>
+        <button onclick="closeModal('editorModal')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold">✕</button>
+      </div>
+      
+      <div class="py-3 flex-1 overflow-y-auto space-y-3 text-sm">
+        <p class="text-slate-500">
+          يمكنك تعديل الأسئلة أو نسخ بنية JSON لإضافة أسئلة خاصة بدرس اليوم بكل بساطة:
+        </p>
+        <textarea id="jsonEditorArea" rows="12" class="w-full p-3 font-mono text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 text-slate-800 dir-ltr text-left"></textarea>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+        <button onclick="resetEditorToDefault()" class="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg">
+          استعادة الأسئلة الافتراضية
+        </button>
+        <div class="flex gap-2">
+          <button onclick="closeModal('editorModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm">
+            إلغاء
+          </button>
+          <button onclick="saveCustomQuestions()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm">
+            حفظ وتطبيق الأسئلة ✅
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom In-App Modal / Toast Notification -->
+  <div id="appModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl">
+      <div id="appModalIcon" class="text-4xl mb-2">ℹ️</div>
+      <h4 id="appModalTitle" class="text-lg font-black text-slate-800 mb-1">تنبيه</h4>
+      <p id="appModalBody" class="text-sm text-slate-600 mb-5"></p>
+      <div id="appModalActions" class="flex justify-center gap-2">
+        <button onclick="closeModal('appModal')" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm">حسناً</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT LOGIC -->
+  <!-- ========================================== -->
+  <script>
+    "use strict";
+
+    /* ===================================================
+       1. QUESTION PACKS DATABASE
+       =================================================== */
+    const questionPacks = {
+      // 1. الثقافة والعلوم العامة
+      general: [
+        {
+          name: "انطلاقة الأبطال", points: 10,
+          questions: [
+            { q: "كم عدد أيام الأسبوع؟", a: ["5 أيام", "6 أيام", "7 أيام", "8 أيام"], correct: 2, hint: "يبدأ بالسبت وينتهي بالجمعة.", explain: "يتكون الأسبوع من سبعة أيام كاملة." },
+            { q: "ما هو ناتج جمع: 8 + 7 ؟", a: ["14", "15", "16", "17"], correct: 1, hint: "أضف 7 إلى 8 ذهنياً.", explain: "8 + 7 = 15." },
+            { q: "أيّ هذه الكائنات ينتمي إلى طائفة الثدييات؟", a: ["السمكة الذهبية", "القطة الأليفة", "الفراشة الملونة", "الضفدع الأخضر"], correct: 1, hint: "حيوان أليف يغطي جسمه الفرو ويلد صغاره.", explain: "القطة من الثدييات التي تلد وترضع صغارها." }
+          ]
+        },
+        {
+          name: "روّاد المعرفة", points: 15,
+          questions: [
+            { q: "ما هو ناتج العملية الحسابية: 12 × 4 ؟", a: ["36", "42", "48", "52"], correct: 2, hint: "اضرب 10 × 4 ثم أضف 2 × 4.", explain: "12 × 4 = 48." },
+            { q: "ما هو العضو الرئيسي المسؤول عن التنفس وتبادل الأكسجين عند الإنسان؟", a: ["الرئتان", "المعدة", "الكبد", "القلب"], correct: 0, hint: "يقعان داخل القفص الصدري.", explain: "الرئتان هما المسؤولتان عن تزويد الجسم بالأكسجين والتخلص من ثاني أكسيد الكربون." },
+            { q: "ما هو جمع التكسير الصحيح لكلمة (كِتاب)؟", a: ["كاتبون", "مكتبات", "كُتُب", "كتابات"], correct: 2, hint: "نقول: قرأتُ ثلاثة ... نافعة.", explain: "جمع كتاب هو كُتُب." }
+          ]
+        },
+        {
+          name: "صندوق الأسرار", points: 20,
+          questions: [
+            { q: "ما هو الكوكب الذي نعيش على سطحه ويُلقب بالكوكب الأزرق؟", a: ["المريخ", "كوكب الأرض", "المشتري", "عطارد"], correct: 1, hint: "الماء يغطي أكثر من 70% من مساحته.", explain: "نعيش على كوكب الأرض الوحيد المعروف بوجود الحياة حتى الآن." },
+            { q: "عدد إذا أضفنا إليه 9 أصبح الناتج 25، فما هو؟", a: ["14", "15", "16", "17"], correct: 2, hint: "قم بطرح 9 من 25.", explain: "25 - 9 = 16." },
+            { q: "ما هو النمط العددي التالي: 5 ، 10 ، 15 ، 20 ، ... ؟", a: ["22", "24", "25", "30"], correct: 2, hint: "القفز بمقدار 5 في كل خطوة.", explain: "العدد التالي بعد 20 هو 25." }
+          ]
+        },
+        {
+          name: "تحدّي السرعة والذكاء", points: 25,
+          questions: [
+            { q: "هل الشمس كوكب أم نجم؟", a: ["نجم ملتهب", "كوكب صخري", "قمر صناعي", "مذنب جليدي"], correct: 0, hint: "تصدر الضوء والحرارة من ذاتها.", explain: "الشمس هي النجم المركزي لنظامنا الشمسي." },
+            { q: "ما هو ناتج الطرح: 100 - 35 ؟", a: ["55", "65", "70", "75"], correct: 1, hint: "اطرح 30 أولاً ثم اطرح 5.", explain: "100 - 35 = 65." },
+            { q: "ما هو مضاد (عكس) كلمة: (طويل)؟", a: ["كبير", "قصير", "نحيف", "سريع"], correct: 1, hint: "عكس الشيء المرتفع.", explain: "عكس طويل هو قصير." }
+          ]
+        },
+        {
+          name: "السؤال الذهبي الحاسم", points: 30,
+          questions: [
+            { q: "مستطيل طوله 8 سم وعرضه 3 سم، فما هو محيطه الإجمالي؟", a: ["11 سم", "16 سم", "22 سم", "24 سم"], correct: 2, hint: "القانون: (الطول + العرض) × 2.", explain: "المحيط = (8 + 3) × 2 = 11 × 2 = 22 سم." },
+            { q: "ما هو الغاز الذي تمتصه النباتات من الهواء للقيام بالبناء الضوئي؟", a: ["الأكسجين", "ثاني أكسيد الكربون", "النيتروجين", "الهيليوم"], correct: 1, hint: "تطلقه الكائنات الحية أثناء الزفير.", explain: "تمتص النباتات غاز ثاني أكسيد الكربون وتطلق غاز الأكسجين." },
+            { q: "إذا كان نصف عدد معين يساوي 24، فما هو ذلك العدد؟", a: ["12", "36", "48", "96"], correct: 2, hint: "اضرب 24 في 2.", explain: "العدد هو 24 × 2 = 48." }
+          ]
+        }
+      ],
+
+      // 2. التربية الإسلامية
+      islamic: [
+        {
+          name: "أركان وقيم", points: 10,
+          questions: [
+            { q: "كم عدد أركان الإسلام؟", a: ["3 أركان", "4 أركان", "5 أركان", "6 أركان"], correct: 2, hint: "بني الإسلام على خمس.", explain: "أركان الإسلام خمسة: الشهادتان، إقام الصلاة، إيتاء الزكاة، صوم رمضان، وحج البيت." },
+            { q: "ما هي أول سورة في المصحف الشريف؟", a: ["سورة البقرة", "سورة الفاتحة", "سورة الإخلاص", "سورة الناس"], correct: 1, hint: "تسمى أم الكتاب والسبع المثاني.", explain: "سورة الفاتحة هي أولى سور القرآن الكريم ترتيباً." },
+            { q: "كم عدد الصلوات المفروضة في اليوم والليلة؟", a: ["3 صلوات", "4 صلوات", "5 صلوات", "6 صلوات"], correct: 2, hint: "الفجر، الظهر، العصر، المغرب، العشاء.", explain: "الصلوات المفروضة خمس صلوات يومياً." }
+          ]
+        },
+        {
+          name: "السيرة العطرة", points: 15,
+          questions: [
+            { q: "أين وُلِدَ نبينا محمد صلى الله عليه وسلم؟", a: ["المدينة المنورة", "مكة المكرمة", "القدس الشريف", "الطائف"], correct: 1, hint: "فيها الكعبة المشرفة والمسجد الحرام.", explain: "ولد الرسول ﷺ في مكة المكرمة عام الفيل." },
+            { q: "من هو أول الخلفاء الراشدين رضي الله عنهم؟", a: ["عمر بن الخطاب", "أبو بكر الصديق", "عثمان بن عفان", "علي بن أبي طالب"], correct: 1, hint: "صاحب النبي ﷺ في الهجرة ورفيقه في الغار.", explain: "أبو بكر الصديق رضي الله عنه هو أول الخلفاء الراشدين." },
+            { q: "ما اسم الغار الذي كان يتعبد فيه النبي ﷺ ونزل عليه الوحي فيه؟", a: ["غار ثور", "غار حراء", "غار أحد", "غار سيناء"], correct: 1, hint: "يقع في جبل النور بمكة المكرمة.", explain: "نزل الوحي على النبي ﷺ في غار حراء." }
+          ]
+        },
+        {
+          name: "قصص الأنبياء", points: 20,
+          questions: [
+            { q: "من هو النبي الملقب بـ (كليم الله)؟", a: ["إبراهيم عليه السلام", "موسى عليه السلام", "عيسى عليه السلام", "نوح عليه السلام"], correct: 1, hint: "كلّمه الله تعالى عند جبل الطور.", explain: "كليم الله هو نبي الله موسى عليه السلام." },
+            { q: "ما هي المعجزة الكبرى التي أوتيها النبي محمد ﷺ؟", a: ["القرآن الكريم", "عصا تشق البحر", "إحياء الموتى", "سفينة النجاة"], correct: 0, hint: "كتاب الله المحفوظ المتلو في كل زمان.", explain: "القرآن الكريم هو المعجزة الخالدة الباقية." },
+            { q: "من بنى الكعبة المشرفة مع ابنه إسماعيل عليهما السلام؟", a: ["آدم عليه السلام", "إبراهيم عليه السلام", "سليمان عليه السلام", "داود عليه السلام"], correct: 1, hint: "خليل الرحمن وشيخ الأنبياء.", explain: "بنى إبراهيم الخليل عليه السلام الكعبة برفقة ابنه إسماعيل." }
+          ]
+        },
+        {
+          name: "القرآن والأحكام", points: 25,
+          questions: [
+            { q: "ما أطول سورة في القرآن الكريم؟", a: ["سورة آل عمران", "سورة النساء", "سورة البقرة", "سورة المائدة"], correct: 2, hint: "تضم آية الكرسي وأطول آية في القرآن (آية الدَّيْن).", explain: "سورة البقرة هي أطول سور القرآن الكريم بعدد 286 آية." },
+            { q: "ما هو الشهر المبارك الذي فرض الله فيه الصيام؟", a: ["شعبان", "رمضان", "شوال", "رجب"], correct: 1, hint: "شهر القرآن وليلة القدر.", explain: "شهر رمضان المبارك هو شهر الصيام." },
+            { q: "أي صلاة ليس فيها ركوع ولا سجود؟", a: ["صلاة الكسوف", "صلاة الجنازة", "صلاة الاستسقاء", "صلاة الوتر"], correct: 1, hint: "تؤدى على الميت وتتكون من أربع تكبيرات.", explain: "صلاة الجنازة تؤدى قياماً بأربع تكبيرات ودعاء." }
+          ]
+        },
+        {
+          name: "التحدي القرآني الذهبي", points: 30,
+          questions: [
+            { q: "كم عدد سور القرآن الكريم؟", a: ["110 سور", "114 سورة", "120 سورة", "99 سورة"], correct: 1, hint: "أولها الفاتحة وآخرها الناس.", explain: "عدد سور المصحف الشريف 114 سورة." },
+            { q: "ما اسم النبي الذي ابتلعه الحوت وسبّح في الظلمات؟", a: ["يونس عليه السلام", "أيوب عليه السلام", "يحيى عليه السلام", "زكريا عليه السلام"], correct: 0, hint: "صاحب دعاء: (لا إله إلا أنت سبحانك إني كنت من الظالمين).", explain: "هو نبي الله يونس ذو النون عليه السلام." },
+            { q: "ما هي الليلة التي هي خير من ألف شهر؟", a: ["ليلة النصف من شعبان", "ليلة الإسراء والمعراج", "ليلة القدر", "ليلة الجمعة"], correct: 2, hint: "تتحرى في العشر الأواخر من رمضان.", explain: "ليلة القدر في شهر رمضان المبارك خير من ألف شهر." }
+          ]
+        }
+      ],
+
+      // 3. الرياضيات والألغاز
+      math: [
+        {
+          name: "انطلاقة الحساب", points: 10,
+          questions: [
+            { q: "ما هو حاصل ضرب: 9 × 6 ؟", a: ["45", "54", "56", "63"], correct: 1, hint: "أقل من 60 بستة درجات.", explain: "9 × 6 = 54." },
+            { q: "كم رأس للمثلث الهندسي؟", a: ["2", "3", "4", "5"], correct: 1, hint: "المثلث يتكون من 3 أضلاع و...", explain: "المثلث له 3 رؤوس و 3 أضلاع." },
+            { q: "إذا كان معك 50 ريالاً واشتريت كتاباً بـ 28 ريالاً، فكم تبقى معك؟", a: ["20 ريالاً", "22 ريالاً", "24 ريالاً", "32 ريالاً"], correct: 1, hint: "اطرح 28 من 50.", explain: "50 - 28 = 22 ريالاً." }
+          ]
+        },
+        {
+          name: "هندسة وأرقام", points: 15,
+          questions: [
+            { q: "مربع طول ضلعه 5 سم، ما هي مساحته الإجمالية؟", a: ["20 سم²", "25 سم²", "15 سم²", "30 سم²"], correct: 1, hint: "مساحة المربع = طول الضلع × نفسه.", explain: "5 × 5 = 25 سنتيمتراً مربعاً." },
+            { q: "ما هو الكسر المساوي لنصف (1/2)؟", a: ["2/3", "2/4", "3/5", "1/4"], correct: 1, hint: "اقسم البسط والمقام على 2.", explain: "2/4 بعد التبسيط تساوي 1/2." },
+            { q: "كم دقيقة في ساعتين ونصف؟", a: ["120 دقيقة", "140 دقيقة", "150 دقيقة", "180 دقيقة"], correct: 2, hint: "الساعة = 60 دقيقة، 60 + 60 + 30.", explain: "60 + 60 + 30 = 150 دقيقة." }
+          ]
+        },
+        {
+          name: "قوة الملاحظة", points: 20,
+          questions: [
+            { q: "ما هو العدد الذي يقبل القسمة على 2 و 5 في نفس الوقت؟", a: ["25", "34", "40", "47"], correct: 2, hint: "يجب أن يكون آحاده صفراً.", explain: "العدد 40 يقبل القسمة على 2 (الناتج 20) وعلى 5 (الناتج 8)." },
+            { q: "ما قيمة الزاوية القائمة؟", a: ["45 درجة", "90 درجة", "180 درجة", "360 درجة"], correct: 1, hint: "زاوية ركن المربع أو المستطيل.", explain: "الزاوية القائمة قياسها 90 درجة دائماً." },
+            { q: "ما هو العدد الأولي الوحيد الذي يكون عدداً زوجياً؟", a: ["0", "1", "2", "4"], correct: 2, hint: "أصغر الأعداد الأولية.", explain: "العدد 2 هو العدد الزوجي الأولي الوحيد لأن عوامله هي 1 و 2 فقط." }
+          ]
+        },
+        {
+          name: "ذكاء وتفكير منطقي", points: 25,
+          questions: [
+            { q: "متتالية أعداد: 2 ، 4 ، 8 ، 16 ، ... فما هو العدد القادم؟", a: ["24", "30", "32", "64"], correct: 2, hint: "نضرب العدد السابق في 2 كل مرة.", explain: "16 × 2 = 32." },
+            { q: "قطار يسير بسرعة 80 كم في الساعة، فكم المسافة التي يقطعها في 3 ساعات؟", a: ["160 كم", "200 كم", "240 كم", "280 كم"], correct: 2, hint: "المسافة = السرعة × الزمن.", explain: "80 × 3 = 240 كم." },
+            { q: "ما هو المتوسط الحسابي للأعداد: 10 و 20 و 30 ؟", a: ["15", "20", "25", "30"], correct: 1, hint: "اجمع الأعداد واقسم الناتج على 3.", explain: "(10 + 20 + 30) ÷ 3 = 60 ÷ 3 = 20." }
+          ]
+        },
+        {
+          name: "اللغز الرياضي الذهبي", points: 30,
+          questions: [
+            { q: "عمر الأب 36 عاماً وعمر ابنه ربع عمر أبيه. فكم عمر الابن؟", a: ["7 أعوام", "8 أعوام", "9 أعوام", "12 عاماً"], correct: 2, hint: "اقسم 36 على 4.", explain: "36 ÷ 4 = 9 أعوام." },
+            { q: "ما هو مجموع قياسات زوايا أي مثلث في المستوى؟", a: ["90 درجة", "180 درجة", "270 درجة", "360 درجة"], correct: 1, hint: "تعادل زاويتين قائمتين.", explain: "مجموع زوايا أي مثلث يساوي 180 درجة دائماً." },
+            { q: "إذا ضربنا أي عدد في صفر، فما هي النتيجة دائماً؟", a: ["نفس العدد", "واحد", "صفر", "لا نهاية"], correct: 2, hint: "خاصية الضرب في العنصر الماص.", explain: "أي عدد مضروب في صفر يساوي صفراً." }
+          ]
+        }
+      ]
+    };
+
+    /* ===================================================
+       2. AUDIO SYSTEM (Tone.js + Web Audio Synthesis)
+       =================================================== */
+    let soundEnabled = true;
+    let synth = null;
+    let audioInitialized = false;
+
+    function initAudio() {
+      if (audioInitialized) return;
+      try {
+        if (window.Tone) {
+          Tone.start();
+          synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 0.8 }
+          }).toDestination();
+          synth.volume.value = -6;
+        }
+        audioInitialized = true;
+      } catch (e) {
+        console.warn("Audio init deferred or failed:", e);
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById("soundIcon").textContent = soundEnabled ? "🔊" : "🔇";
+      document.getElementById("soundLabel").textContent = soundEnabled ? "الصوت مفعّل" : "الصوت مكتوم";
+    }
+
+    function playToneSound(type) {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!synth) return;
+      const now = Tone.now();
+
+      try {
+        if (type === "click") {
+          synth.triggerAttackRelease("C5", "32n", now);
+        } else if (type === "correct") {
+          synth.triggerAttackRelease(["C5", "E5", "G5"], "16n", now);
+          synth.triggerAttackRelease("C6", "8n", now + 0.12);
+        } else if (type === "wrong") {
+          synth.triggerAttackRelease(["F#3", "C3"], "8n", now);
+        } else if (type === "steal") {
+          synth.triggerAttackRelease(["E5", "B5"], "16n", now);
+          synth.triggerAttackRelease("E6", "8n", now + 0.1);
+        } else if (type === "tick") {
+          synth.triggerAttackRelease("G5", "64n", now);
+        } else if (type === "timeout") {
+          synth.triggerAttackRelease(["D3", "Bb2"], "4n", now);
+        } else if (type === "victory") {
+          synth.triggerAttackRelease(["C4", "E4", "G4"], "8n", now);
+          synth.triggerAttackRelease(["E4", "G4", "C5"], "8n", now + 0.2);
+          synth.triggerAttackRelease(["G4", "C5", "E5", "G5"], "2n", now + 0.4);
+        }
+      } catch (err) {
+        // Fallback silence
+      }
+    }
+
+    /* ===================================================
+       3. CONFETTI PARTICLE SYSTEM
+       =================================================== */
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let confettiParticles = [];
+    let confettiAnimationId = null;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function fireConfetti(count = 70) {
+      const colors = ['#2563eb', '#ea580c', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+      for (let i = 0; i < count; i++) {
+        confettiParticles.push({
+          x: canvas.width / 2 + (Math.random() - 0.5) * 300,
+          y: canvas.height * 0.4 + (Math.random() - 0.5) * 100,
+          vx: (Math.random() - 0.5) * 14,
+          vy: Math.random() * -12 - 4,
+          size: Math.random() * 8 + 5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          rSpeed: (Math.random() - 0.5) * 8,
+          alpha: 1,
+          decay: Math.random() * 0.015 + 0.008
+        });
+      }
+      if (!confettiAnimationId) {
+        animateConfetti();
+      }
+    }
+
+    function animateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = confettiParticles.length - 1; i >= 0; i--) {
+        const p = confettiParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.35; // Gravity
+        p.rotation += p.rSpeed;
+        p.alpha -= p.decay;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.3);
+        ctx.restore();
+
+        if (p.alpha <= 0 || p.y > canvas.height + 50) {
+          confettiParticles.splice(i, 1);
+        }
+      }
+
+      if (confettiParticles.length > 0) {
+        confettiAnimationId = requestAnimationFrame(animateConfetti);
+      } else {
+        cancelAnimationFrame(confettiAnimationId);
+        confettiAnimationId = null;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    /* ===================================================
+       4. GAME STATE MANAGEMENT
+       =================================================== */
+    let currentActivePack = "general";
+    let activeRounds = JSON.parse(JSON.stringify(questionPacks.general));
+    let flatQuestions = [];
+
+    let teamNames = ["فرسان المعرفة", "عباقرة المستقبل"];
+    let scores = [0, 0];
+    let stars = [0, 0];
+    let correctCounts = [0, 0];
+    let hintsUsed = [0, 0];
+
+    let currentQuestionIndex = 0;
+    let selectedOptionIndex = null;
+    let currentShuffledOptions = [];
+    let activeTeamIndex = 0; 
+    let answeringTeamIndex = 0; 
+    let isStealPhase = false;
+    let questionState = "idle"; // "asking", "stealing", "resolved", "paused"
+    let hintUsedThisTurn = false;
+
+    // Timer variables
+    let timerDuration = 20;
+    let remainingTime = 20;
+    let timerInterval = null;
+    let isGamePaused = false;
+
+    /* Initialize Question Pack */
+    function changePack(packKey) {
+      currentActivePack = packKey;
+      if (questionPacks[packKey]) {
+        activeRounds = JSON.parse(JSON.stringify(questionPacks[packKey]));
+      }
+    }
+
+    function buildFlatQuestionsList() {
+      flatQuestions = [];
+      activeRounds.forEach((round, roundIdx) => {
+        round.questions.forEach((q, qIdx) => {
+          flatQuestions.push({
+            ...q,
+            roundIndex: roundIdx,
+            roundName: round.name,
+            points: round.points,
+            id: `r${roundIdx}_q${qIdx}`
+          });
+        });
+      });
+    }
+
+    /* ===================================================
+       5. GAME PLAY CONTROLS
+       =================================================== */
+    function startGame() {
+      initAudio();
+      playToneSound("click");
+
+      // Read Inputs
+      const t1 = document.getElementById("team1Input").value.trim();
+      const t2 = document.getElementById("team2Input").value.trim();
+      teamNames = [t1 || "فرسان المعرفة", t2 || "عباقرة المستقبل"];
+
+      const teacher = document.getElementById("teacherInput").value.trim() || "المعلمة";
+      const lesson = document.getElementById("lessonInput").value.trim() || "تحدّي المعرفة";
+      timerDuration = parseInt(document.getElementById("durationSelect").value, 10);
+
+      document.getElementById("displayTeacherName").textContent = teacher;
+      document.getElementById("displayLessonName").textContent = lesson;
+
+      document.getElementById("displayTeam1").textContent = teamNames[0];
+      document.getElementById("displayTeam2").textContent = teamNames[1];
+
+      // Reset statistics
+      scores = [0, 0];
+      stars = [0, 0];
+      correctCounts = [0, 0];
+      hintsUsed = [0, 0];
+      currentQuestionIndex = 0;
+
+      buildFlatQuestionsList();
+
+      // Show Game Area
+      document.getElementById("setupSection").classList.add("hidden");
+      document.getElementById("resultsSection").classList.add("hidden");
+      document.getElementById("gameSection").classList.remove("hidden");
+      document.getElementById("gameSection").classList.add("flex");
+
+      updateScoreboardUI();
+      loadQuestion(0);
+    }
+
+    function updateScoreboardUI() {
+      document.getElementById("scoreDisplay0").textContent = scores[0];
+      document.getElementById("scoreDisplay1").textContent = scores[1];
+
+      document.getElementById("starsDisplay0").textContent = `⭐ ${stars[0]} نجوم`;
+      document.getElementById("starsDisplay1").textContent = `⭐ ${stars[1]} نجوم`;
+
+      // Highlight Active Team Card
+      const card0 = document.getElementById("teamCard0");
+      const card1 = document.getElementById("teamCard1");
+      const badge0 = document.getElementById("turnBadge0");
+      const badge1 = document.getElementById("turnBadge1");
+
+      if (answeringTeamIndex === 0) {
+        card0.classList.add("ring-4", "ring-yellow-400", "scale-[1.02]");
+        card1.classList.remove("ring-4", "ring-yellow-400", "scale-[1.02]");
+        badge0.classList.remove("hidden");
+        badge1.classList.add("hidden");
+      } else {
+        card1.classList.add("ring-4", "ring-yellow-400", "scale-[1.02]");
+        card0.classList.remove("ring-4", "ring-yellow-400", "scale-[1.02]");
+        badge1.classList.remove("hidden");
+        badge0.classList.add("hidden");
+      }
+    }
+
+    function loadQuestion(idx) {
+      stopTimer();
+      isGamePaused = false;
+      document.getElementById("pauseBtn").textContent = "⏸️ مؤقت";
+      selectedOptionIndex = null;
+      hintUsedThisTurn = false;
+      isStealPhase = false;
+      questionState = "asking";
+
+      const qData = flatQuestions[idx];
+      // Alternate turns: Team 0 starts Q1, Team 1 starts Q2, etc.
+      activeTeamIndex = idx % 2;
+      answeringTeamIndex = activeTeamIndex;
+
+      // Update Top Status Bar
+      document.getElementById("roundIndicator").textContent = `الجولة ${qData.roundIndex + 1}: ${qData.roundName}`;
+      document.getElementById("questionCountIndicator").textContent = `السؤال ${idx + 1} من ${flatQuestions.length}`;
+      document.getElementById("pointsBadge").textContent = `${qData.points} نقطة`;
+
+      const progressPct = ((idx) / flatQuestions.length) * 100;
+      document.getElementById("gameProgressBar").style.width = `${progressPct}%`;
+
+      // Update Team Banner
+      updateBannerText();
+
+      // Render Question
+      document.getElementById("questionText").textContent = qData.q;
+
+      // Hide Feedback Box
+      document.getElementById("feedbackBox").classList.add("hidden");
+
+      // Controls State
+      document.getElementById("answerControls").classList.remove("hidden");
+      document.getElementById("stealControls").classList.add("hidden");
+      document.getElementById("nextControls").classList.add("hidden");
+      document.getElementById("confirmAnswerBtn").disabled = true;
+
+      // Shuffle options to prevent positional predictability
+      currentShuffledOptions = qData.a.map((text, originalIndex) => ({
+        text,
+        isCorrect: originalIndex === qData.correct
+      }));
+
+      // Render Options Buttons
+      const grid = document.getElementById("optionsGrid");
+      grid.innerHTML = "";
+
+      currentShuffledOptions.forEach((opt, optIdx) => {
+        const btn = document.createElement("button");
+        btn.id = `optBtn_${optIdx}`;
+        btn.className = "w-full min-h-[64px] p-4 text-center rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-indigo-50/50 hover:border-indigo-300 active:scale-[0.99] font-bold text-slate-800 text-base sm:text-lg transition shadow-sm flex items-center justify-center gap-2";
+        btn.textContent = opt.text;
+        btn.onclick = () => selectOption(optIdx);
+        grid.appendChild(btn);
+      });
+
+      updateScoreboardUI();
+      startTimer();
+    }
+
+    function updateBannerText() {
+      const banner = document.getElementById("activeBanner");
+      const icon = document.getElementById("bannerIcon");
+      const text = document.getElementById("bannerText");
+
+      if (isStealPhase) {
+        banner.className = "py-2.5 px-4 rounded-2xl mb-4 text-center font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition duration-200 bg-amber-100 text-amber-900 border border-amber-300 animate-pulse";
+        icon.textContent = "⚡";
+        text.textContent = `فرصة سرقة لصالح: ${teamNames[answeringTeamIndex]} (نصف النقاط)`;
+      } else {
+        if (answeringTeamIndex === 0) {
+          banner.className = "py-2.5 px-4 rounded-2xl mb-4 text-center font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition duration-200 bg-blue-100 text-blue-900 border border-blue-200";
+          icon.textContent = "🔵";
+          text.textContent = `دور الإجابة: ${teamNames[0]}`;
+        } else {
+          banner.className = "py-2.5 px-4 rounded-2xl mb-4 text-center font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition duration-200 bg-orange-100 text-orange-900 border border-orange-200";
+          icon.textContent = "🟠";
+          text.textContent = `دور الإجابة: ${teamNames[1]}`;
+        }
+      }
+    }
+
+    function selectOption(index) {
+      if (questionState !== "asking" && questionState !== "stealing") return;
+      playToneSound("click");
+      selectedOptionIndex = index;
+
+      currentShuffledOptions.forEach((_, i) => {
+        const btn = document.getElementById(`optBtn_${i}`);
+        if (i === index) {
+          btn.className = "w-full min-h-[64px] p-4 text-center rounded-2xl border-2 border-indigo-600 bg-indigo-50 text-indigo-900 font-extrabold text-base sm:text-lg transition shadow-md ring-2 ring-indigo-200";
+        } else {
+          btn.className = "w-full min-h-[64px] p-4 text-center rounded-2xl border-2 border-slate-200 bg-slate-50 opacity-80 font-bold text-slate-800 text-base sm:text-lg transition";
+        }
+      });
+
+      document.getElementById("confirmAnswerBtn").disabled = false;
+    }
+
+    function confirmSelectedAnswer() {
+      if (selectedOptionIndex === null) return;
+      if (questionState !== "asking" && questionState !== "stealing") return;
+
+      stopTimer();
+      const currentQ = flatQuestions[currentQuestionIndex];
+      const selectedChoice = currentShuffledOptions[selectedOptionIndex];
+      const isRight = selectedChoice.isCorrect;
+
+      // Lock buttons
+      lockAllOptionButtons();
+
+      if (isRight) {
+        // Correct Answer
+        playToneSound(isStealPhase ? "steal" : "correct");
+        fireConfetti(isStealPhase ? 60 : 90);
+
+        const earnedPoints = isStealPhase ? Math.round(currentQ.points / 2) : currentQ.points;
+        scores[answeringTeamIndex] += earnedPoints;
+        stars[answeringTeamIndex]++;
+        correctCounts[answeringTeamIndex]++;
+
+        // Visual Green feedback on button
+        const selectedBtn = document.getElementById(`optBtn_${selectedOptionIndex}`);
+        selectedBtn.className = "w-full min-h-[64px] p-4 text-center rounded-2xl border-2 border-emerald-500 bg-emerald-100 text-emerald-900 font-black text-base sm:text-lg transition shadow-md";
+
+        showFeedback(
+          true,
+          `🎉 إجابة صحيحة وممتازة!`,
+          `فريق ${teamNames[answeringTeamIndex]} يحصد ${earnedPoints} نقطة. ${currentQ.explain}`
+        );
+
+        finalizeQuestionRound();
+      } else {
+        // Wrong Answer
+        playToneSound("wrong");
+
+        // Visual Red feedback on button
+        const selectedBtn = document.getElementById(`optBtn_${selectedOptionIndex}`);
+        selectedBtn.className = "w-full min-h-[64px] p-4 text-center rounded-2xl border-2 border-red-500 bg-red-100 text-red-900 font-bold text-base sm:text-lg transition shadow-md";
+
+        if (!isStealPhase) {
+          // Allow steal opportunity
+          showFeedback(
+            false,
+            `للأسف، إجابة غير صحيحة!`,
+            `تتاح الآن فرصة السرقة للفريق المنافس لكسب نصف النقاط.`
+          );
+
+          questionState = "missed";
+          document.getElementById("answerControls").classList.add("hidden");
+          document.getElementById("stealControls").classList.remove("hidden");
+        } else {
+          // Already in steal phase and missed
+          showCorrectAnswerVisual();
+          showFeedback(
+            false,
+            `لم تكن إجابة السرقة صحيحة أيضاً!`,
+            `الإجابة الصحيحة هي: "${currentQ.a[currentQ.correct]}". ${currentQ.explain}`
+          );
+          finalizeQuestionRound();
+        }
+      }
+
+      updateScoreboardUI();
+    }
+
+    function lockAllOptionButtons() {
+      currentShuffledOptions.forEach((_, i) => {
+        const btn = document.getElementById(`optBtn_${i}`);
+        if (btn) btn.disabled = true;
+      });
+      document.getElementById("confirmAnswerBtn").disabled = true;
+    }
+
+    function unlockAllOptionButtons() {
+      currentShuffledOptions.forEach((_, i) => {
+        const btn = document.getElementById(`optBtn_${i}`);
+        if (btn) {
+          btn.disabled = false;
+          btn.className = "w-full min-h-[64px] p-4 text-center rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-indigo-50/50 hover:border-indigo-300 font-bold text-slate-800 text-base sm:text-lg transition shadow-sm flex items-center justify-center gap-2";
+        }
+      });
+      document.getElementById("confirmAnswerBtn").disabled = true;
+      selectedOptionIndex = null;
+    }
+
+    function showCorrectAnswerVisual() {
+      currentShuffledOptions.forEach((opt, i) => {
+        if (opt.isCorrect) {
+          const btn = document.getElementById(`optBtn_${i}`);
+          if (btn) {
+            btn.className = "w-full min-h-[64px] p-4 text-center rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-emerald-900 font-black text-base sm:text-lg";
+          }
+        }
+      });
+    }
+
+    function showFeedback(isPositive, title, text) {
+      const box = document.getElementById("feedbackBox");
+      const icon = document.getElementById("feedbackIcon");
+      const titleElem = document.getElementById("feedbackTitle");
+      const explElem = document.getElementById("feedbackExplanation");
+
+      box.classList.remove("hidden");
+      if (isPositive) {
+        box.className = "rounded-2xl p-4 my-3 text-sm sm:text-base flex items-start gap-3 bg-emerald-50 border border-emerald-200 text-emerald-900";
+        icon.textContent = "🌟";
+      } else {
+        box.className = "rounded-2xl p-4 my-3 text-sm sm:text-base flex items-start gap-3 bg-amber-50 border border-amber-200 text-amber-900";
+        icon.textContent = "💡";
+      }
+
+      titleElem.textContent = title;
+      explElem.textContent = text;
+    }
+
+    /* ===================================================
+       6. STEAL MECHANISM & TIMEOUT
+       =================================================== */
+    function executeStealOpportunity() {
+      isStealPhase = true;
+      questionState = "stealing";
+      answeringTeamIndex = 1 - activeTeamIndex; // switch to opponent
+
+      playToneSound("click");
+      updateBannerText();
+      updateScoreboardUI();
+
+      document.getElementById("feedbackBox").classList.add("hidden");
+      document.getElementById("stealControls").classList.add("hidden");
+      document.getElementById("answerControls").classList.remove("hidden");
+
+      unlockAllOptionButtons();
+      startTimer();
+    }
+
+    function skipStealAndContinue() {
+      const currentQ = flatQuestions[currentQuestionIndex];
+      showCorrectAnswerVisual();
+      showFeedback(
+        false,
+        `تم تجاوز فرصة السرقة`,
+        `الإجابة الصحيحة كانت: "${currentQ.a[currentQ.correct]}". ${currentQ.explain}`
+      );
+      finalizeQuestionRound();
+    }
+
+    function finalizeQuestionRound() {
+      questionState = "resolved";
+      stopTimer();
+      document.getElementById("answerControls").classList.add("hidden");
+      document.getElementById("stealControls").classList.add("hidden");
+      document.getElementById("nextControls").classList.remove("hidden");
+    }
+
+    function advanceToNextQuestion() {
+      playToneSound("click");
+      if (currentQuestionIndex + 1 < flatQuestions.length) {
+        currentQuestionIndex++;
+        loadQuestion(currentQuestionIndex);
+      } else {
+        concludeGame();
+      }
+    }
+
+    function skipCurrentQuestion() {
+      if (questionState !== "asking") return;
+      playToneSound("click");
+      stopTimer();
+      lockAllOptionButtons();
+
+      showFeedback(
+        false,
+        `تم تخطي السؤال من قِبل الفريق الحالي`,
+        `يمكن الآن للفريق المنافس اغتنام السؤال والسرقة بنصف النقاط.`
+      );
+
+      questionState = "missed";
+      document.getElementById("answerControls").classList.add("hidden");
+      document.getElementById("stealControls").classList.remove("hidden");
+    }
+
+    function useHint() {
+      if (hintUsedThisTurn || (questionState !== "asking" && questionState !== "stealing")) return;
+      hintUsedThisTurn = true;
+      hintsUsed[answeringTeamIndex]++;
+      playToneSound("click");
+
+      const currentQ = flatQuestions[currentQuestionIndex];
+      showFeedback(
+        false,
+        `💡 تلميح للمساعدة:`,
+        currentQ.hint || "ركز في المطلوب بدقة واستبعد الخيارات البعيدة."
+      );
+    }
+
+    function togglePauseGame() {
+      if (questionState !== "asking" && questionState !== "stealing") return;
+      isGamePaused = !isGamePaused;
+      const pauseBtn = document.getElementById("pauseBtn");
+
+      if (isGamePaused) {
+        pauseBtn.textContent = "▶️ استئناف";
+        document.getElementById("timerContainer").classList.add("bg-amber-100", "border-amber-300");
+      } else {
+        pauseBtn.textContent = "⏸️ مؤقت";
+        document.getElementById("timerContainer").classList.remove("bg-amber-100", "border-amber-300");
+      }
+    }
+
+    /* ===================================================
+       7. TIMER ENGINE
+       =================================================== */
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function startTimer() {
+      stopTimer();
+      remainingTime = timerDuration;
+      renderTimer();
+
+      if (timerDuration === 0) {
+        document.getElementById("timerDisplay").textContent = "∞";
+        return;
+      }
+
+      timerInterval = setInterval(() => {
+        if (isGamePaused) return;
+
+        remainingTime--;
+        renderTimer();
+
+        if (remainingTime <= 5 && remainingTime > 0) {
+          playToneSound("tick");
+          document.getElementById("timerContainer").classList.add("animate-pulse-fast", "bg-red-50", "border-red-300");
+          document.getElementById("timerDisplay").classList.add("text-red-600");
+        }
+
+        if (remainingTime <= 0) {
+          stopTimer();
+          handleTimeOut();
+        }
+      }, 1000);
+    }
+
+    function renderTimer() {
+      if (timerDuration === 0) return;
+      const timerDisplay = document.getElementById("timerDisplay");
+      const timerContainer = document.getElementById("timerContainer");
+      timerDisplay.textContent = Math.max(0, remainingTime);
+
+      if (remainingTime > 5) {
+        timerContainer.classList.remove("animate-pulse-fast", "bg-red-50", "border-red-300");
+        timerDisplay.classList.remove("text-red-600");
+      }
+    }
+
+    function handleTimeOut() {
+      playToneSound("timeout");
+      lockAllOptionButtons();
+
+      if (questionState === "asking") {
+        showFeedback(
+          false,
+          `⏰ انتهى الوقت المخصص للإجابة!`,
+          `تتاح فرصة السرقة للفريق المنافس لكسب نصف النقاط.`
+        );
+        questionState = "missed";
+        document.getElementById("answerControls").classList.add("hidden");
+        document.getElementById("stealControls").classList.remove("hidden");
+      } else if (questionState === "stealing") {
+        const currentQ = flatQuestions[currentQuestionIndex];
+        showCorrectAnswerVisual();
+        showFeedback(
+          false,
+          `⏰ انتهى وقت السرقة أيضاً!`,
+          `الإجابة الصحيحة كانت: "${currentQ.a[currentQ.correct]}". ${currentQ.explain}`
+        );
+        finalizeQuestionRound();
+      }
+    }
+
+    /* ===================================================
+       8. CONCLUSION & RESULTS
+       =================================================== */
+    function concludeGame() {
+      stopTimer();
+      playToneSound("victory");
+      fireConfetti(150);
+
+      document.getElementById("gameSection").classList.add("hidden");
+      document.getElementById("resultsSection").classList.remove("hidden");
+      document.getElementById("gameProgressBar").style.width = "100%";
+
+      // Fill Certificate & Podium
+      document.getElementById("resTeam1Name").textContent = teamNames[0];
+      document.getElementById("resTeam2Name").textContent = teamNames[1];
+
+      document.getElementById("resTeam1Score").textContent = scores[0];
+      document.getElementById("resTeam2Score").textContent = scores[1];
+
+      document.getElementById("resTeam1Correct").textContent = `✅ ${correctCounts[0]} صحيحة`;
+      document.getElementById("resTeam2Correct").textContent = `✅ ${correctCounts[1]} صحيحة`;
+
+      document.getElementById("resTeam1Stars").textContent = `⭐ ${stars[0]} نجوم`;
+      document.getElementById("resTeam2Stars").textContent = `⭐ ${stars[1]} نجوم`;
+
+      document.getElementById("resTeacher").textContent = document.getElementById("teacherInput").value || "المعلمة";
+      document.getElementById("resLesson").textContent = document.getElementById("lessonInput").value || "المسابقة المنهجية";
+
+      const crown1 = document.getElementById("winnerCrown1");
+      const crown2 = document.getElementById("winnerCrown2");
+      const finalTitle = document.getElementById("finalTitle");
+      const finalSubtitle = document.getElementById("finalSubtitle");
+
+      crown1.classList.add("hidden");
+      crown2.classList.add("hidden");
+
+      if (scores[0] > scores[1]) {
+        crown1.classList.remove("hidden");
+        finalTitle.textContent = `مبارك الفوز لفريق ${teamNames[0]}! 🏆`;
+        finalSubtitle.textContent = `أداء استثنائي وروح تنافسية عالية تستحق الثناء والتقدير.`;
+      } else if (scores[1] > scores[0]) {
+        crown2.classList.remove("hidden");
+        finalTitle.textContent = `مبارك الفوز لفريق ${teamNames[1]}! 🏆`;
+        finalSubtitle.textContent = `أداء استثنائي وروح تنافسية عالية تستحق الثناء والتقدير.`;
+      } else {
+        finalTitle.textContent = `تعادل رائع وأداء بطولي للفريقين! 🤝`;
+        finalSubtitle.textContent = `المعرفة والشغف والتعاون هما الفوز الحقيقي لكلا الفريقين.`;
+      }
+    }
+
+    function restartGame() {
+      document.getElementById("resultsSection").classList.add("hidden");
+      document.getElementById("setupSection").classList.remove("hidden");
+      playToneSound("click");
+    }
+
+    function confirmRestartGame() {
+      showAppModal(
+        "⚠️ هل أنت متأكد؟",
+        "سيتم إلغاء تقدم المسابقة الحالي والعودة لشاشة البداية.",
+        () => {
+          stopTimer();
+          restartGame();
+          closeModal('appModal');
+        }
+      );
+    }
+
+    /* ===================================================
+       9. MODALS & JSON EDITOR UTILITIES
+       =================================================== */
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.classList.remove("hidden");
+        if (id === 'editorModal') {
+          document.getElementById('jsonEditorArea').value = JSON.stringify(activeRounds, null, 2);
+        }
+      }
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.add("hidden");
+    }
+
+    function saveCustomQuestions() {
+      try {
+        const text = document.getElementById('jsonEditorArea').value;
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          throw new Error("يجب أن تكون الأسئلة مصفوفة جولات تحوي كائنات الأسئلة.");
+        }
+        activeRounds = parsed;
+        closeModal('editorModal');
+        showAppModal("✅ تم الحفظ بنجاح", "تم اعتماد بنك الأسئلة المخصص للمسابقة الحالية.");
+      } catch (err) {
+        showAppModal("❌ خطأ في التنسيق", "يرجى التحقق من صحة تنسيق JSON: " + err.message);
+      }
+    }
+
+    function resetEditorToDefault() {
+      activeRounds = JSON.parse(JSON.stringify(questionPacks.general));
+      document.getElementById('jsonEditorArea').value = JSON.stringify(activeRounds, null, 2);
+    }
+
+    function showAppModal(title, message, onConfirm = null) {
+      document.getElementById("appModalTitle").textContent = title;
+      document.getElementById("appModalBody").textContent = message;
+
+      const actions = document.getElementById("appModalActions");
+      actions.innerHTML = "";
+
+      if (onConfirm) {
+        const cancelBtn = document.createElement("button");
+        cancelBtn.className = "px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm";
+        cancelBtn.textContent = "إلغاء";
+        cancelBtn.onclick = () => closeModal('appModal');
+
+        const confirmBtn = document.createElement("button");
+        confirmBtn.className = "px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm";
+        confirmBtn.textContent = "تأكيد";
+        confirmBtn.onclick = onConfirm;
+
+        actions.appendChild(cancelBtn);
+        actions.appendChild(confirmBtn);
+      } else {
+        const okBtn = document.createElement("button");
+        okBtn.className = "px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm";
+        okBtn.textContent = "حسناً";
+        okBtn.onclick = () => closeModal('appModal');
+        actions.appendChild(okBtn);
+      }
+
+      document.getElementById("appModal").classList.remove("hidden");
+    }
+
+    // Initialize default pack on load
+    window.addEventListener("DOMContentLoaded", () => {
+      buildFlatQuestionsList();
+    });
+  </script>
+</body>
+</html>
